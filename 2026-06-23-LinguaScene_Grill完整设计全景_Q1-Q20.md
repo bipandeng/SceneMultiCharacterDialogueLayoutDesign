@@ -1121,6 +1121,167 @@ Token 估算: ~465 tokens
 
 ---
 
+## 14. iOS UI 及交互设计
+
+**日期**: 2026-06-25
+**技术栈**: SwiftUI (全量) + iOS 17+
+**设计语言**: Apple HIG + iMessage 风格对话
+
+### 14.1 导航架构
+
+底部 4 Tab (`TabView`), 每个 Tab 内 `NavigationStack`:
+
+```
+┌──────────────────────────────────────────┐
+│              (内容区域)                   │
+├──────────┬──────────┬──────────┬────────┤
+│  🏠      │  📚      │  👤      │  ⚙️    │
+│  Scenes  │  Review  │  Roles   │Settings│
+└──────────┴──────────┴──────────┴────────┘
+ Tab 1        Tab 2       Tab 3      Tab 4
+ List+Section  闪卡翻转    List       Form
+```
+
+### 14.2 页面清单
+
+| # | 页面 | 入口 | SwiftUI 组件 |
+|---|---|---|---|
+| 1 | SceneListView | Tab 1 root | List + Section + .searchable + .swipeActions |
+| 2 | SceneConfigView | Push from row | Form + Toggle + .borderedProminent |
+| 3 | ConversationView | Push/fullScreenCover | ScrollView + LazyVStack + .overlay + .sheet |
+| 4 | HistoryView | Push from completed | ScrollView + LazyVStack (只读) |
+| 5 | ReviewView | Tab 2 root | ZStack + .rotation3DEffect (翻转) |
+| 6 | RoleListView | Tab 3 root | List + Section + .swipeActions |
+| 7 | SettingsView | Tab 4 root | Form + Toggle + Picker |
+| 8 | CharacterPickerView | Push from config | List + .onTapGesture |
+
+Sheet 弹层 (4 个): WordDetailView (.medium) / CheckpointView (.medium,.large) / SceneCompleteView (.large) / CreateCharacterView (.large)
+
+### 14.3 对话页 — iMessage 风格
+
+```
+┌──────────────────────────────────────────────┐
+│ .toolbar (导航栏, .bar 模糊)                 │
+│ Marco · Antonio    ●●○○○ 05:23       ⋯    │
+├──────────────────────────────────────────────┤
+│                                              │
+│  ┌─────────────────────────┐                │
+│  │ .regularMaterial 毛玻璃 │                │
+│  │ Marco                   │  ← NPC 气泡   │
+│  │ Welcome! Table for two? │    左对齐      │
+│  │              🔊 0:03    │                │
+│  └─────────────────────────┘                │
+│                                              │
+│      ┌─────────────────────────┐            │
+│      │ 实心 brandPrimary 蓝色  │            │
+│      │ Yes, I have a           │  ← 用户    │
+│      │ reservation.   🎤 0:02  │    右对齐  │
+│      └─────────────────────────┘            │
+│                                              │
+│  ┌─────────────────────────┐                │
+│  │ .regularMaterial        │                │
+│  │ Marco                   │                │
+│  │ The ☞substitute☞ today  │  ← 目标词     │
+│  │ is excellent.  🔊 0:06  │   accentAmber │
+│  └─────────────────────────┘                │
+│         ✨ substitute  ← "叮" 首次出现      │
+│                                              │
+│  ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐       │
+│  │ .thinMaterial                    │       │
+│  │ 💬 Antonio wants to speak [▶]   │ ← 插话 │
+│  └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘       │
+│                                              │
+├──────────────────────────────────────────────┤
+│ .toolbar (输入栏, .bar 模糊)                 │
+│ 🎤  I would like to...         [send]       │
+│                         📝 How to say?      │
+└──────────────────────────────────────────────┘
+
+悬浮: .regularMaterial 词汇卡 (右上, 可拖拽)
+```
+
+**核心规则**: NPC 气泡 = 毛玻璃 (非实体感) | 用户气泡 = 实心 (确定感)
+
+### 14.4 颜色系统
+
+**品牌色**: 深海蓝 (Deep Ocean) — 学习 = 信任 + 沉稳
+
+| Token | Light | Dark | 用途 |
+|---|---|---|---|
+| brandPrimary | #1A73E8 | #4DA3FF | 主按钮/TabBar选中/进度点/链接 |
+| accentAmber | #FF9800 | #FFB74D | 目标词高亮/收藏/Pro标签/"叮" |
+
+**语义色**: 全用系统色, 自动适配 Light/Dark
+
+| Token | 值 | 用途 |
+|---|---|---|
+| success | #34C759 | 分数≥80 / Beat通过 / 收藏完成 |
+| warning | #FF9500 | 分数60-79 |
+| error | #FF3B30 | 分数<60 / Checkpoint失败 |
+| info | #5AC8FA | 老朋友词标记 |
+
+**关键原则**: 只有 2 个自定义色 (brandPrimary + accentAmber), 其余全用系统语义色
+
+### 14.5 毛玻璃材质系统
+
+| UI 元素 | 材质 | 理由 |
+|---|---|---|
+| NPC 气泡 | .regularMaterial | 玻璃感 = 非人类, 区别于用户 |
+| 用户气泡 | 实心 brandPrimary | 实心 = 用户自己, 确定性 |
+| 词汇悬浮卡 | .regularMaterial + shadow(8) | 浮层感, 不遮挡对话 |
+| 插话提示条 | .thinMaterial | 轻量, 不打断视觉注意力 |
+| Beat 进度条 | .thinMaterial | 悬浮辅助信息 |
+| .sheet 背景 | .regularMaterial | 半透明, 透出底层模糊 |
+| Sheet 内卡片 (词汇详情/评分) | .thickMaterial | 需要高对比度, 清晰阅读 |
+| 闪卡正面 | .regularMaterial | 翻转卡片质感 |
+| 闪卡反面 | .thickMaterial | 信息密集面, 需要清晰 |
+| "叮" 动画 | .regularMaterial + .transition(.scale) | 弹出小卡片 + spring |
+
+**材质层级**: 实心 > thickMaterial > regularMaterial > thinMaterial > ultraThinMaterial
+越"实" = 越重要 / 越"属于用户"; 越"透" = 越辅助 / 越"非实体"
+
+### 14.6 目标词状态颜色
+
+| 状态 | NPC 气泡内 | 右侧词汇卡 |
+|---|---|---|
+| □ 未遇到 | 正常文字色 | 空心 ○ 灰色 |
+| ✨ 首次出现 | accentAmber + 下划线 + "叮" haptic | 琥珀高亮 + ✨ 弹跳动画 |
+| ○ 已遇到 | accentAmber + 下划线 | 实心 ● 琥珀色 |
+| ✅ 已收藏 | accentAmber + 下划线 | 绿色 ✓ success色 |
+| 🔄 老朋友 | info蓝色 + 微弱 glow | 蓝色 ↻ + "Review" |
+
+### 14.7 可复用组件 (10 个)
+
+| 组件 | 用途 | 关键修饰符 |
+|---|---|---|
+| MessageBubble | NPC/用户气泡 | .regularMaterial / .background(accentColor) |
+| VocabOverlayCard | 右上方悬浮词汇卡 | .regularMaterial + .shadow + .draggable |
+| BeatProgressBar | ●●○○○ beat 进度 | .thinMaterial 底 + Circle fill |
+| InterruptPrompt | "💬 NPC wants to speak" | .thinMaterial + .onTapGesture |
+| VoiceInputBar | 🎤 + TextField + Send | .bar 模糊底 + TextField(.roundedBorder) |
+| SceneCard | 场景列表行 | List row 默认样式 |
+| FlashcardView | 翻转卡片 | .rotation3DEffect + .onTapGesture |
+| PronunciationGauge | 评分进度条 | Gauge + .tint() 按分段变色 |
+| NpcToggleRow | Form 里角色开关 | Toggle + avatar + subtitle |
+| WordDetailSheet | 词汇详情弹层 | .presentationDetents([.medium]) |
+
+### 14.8 iOS 技术栈
+
+| 技术 | 用途 |
+|---|---|
+| SwiftUI (全量) | 所有 UI |
+| NavigationStack / NavigationPath | 页面导航 |
+| TabView | 底部 4 Tab |
+| .sheet + .presentationDetents | 半屏/全屏弹层 |
+| SF Symbols | 所有图标 (systemImage) |
+| Haptics (.sensoryFeedback) | "叮"/收藏/Checkpoint 触觉反馈 |
+| AVFoundation | 语音录制 + TTS 播放 |
+| Speech framework | 实时 ASR |
+| Swift Concurrency | async/await |
+| @Observable (iOS 17+) | 替代 ObservableObject |
+
+---
+
 ## 12. Session Log
 
 ### 12.1 2026-06-23 第 1 轮 Grill
@@ -1255,3 +1416,4 @@ TG-003 Checkpoint 评分 prompt 工程
 | 2026-06-23 | 1 | Q1-Q20 + 15 表 schema + Session Log 框架 | §1-§12 |
 | 2026-06-24 | 2 | AutoGen vs CAMEL 对比 + 混合架构 + 场景生命周期 + L4-011~013 | §13, §12.2 |
 | 2026-06-24 | 2+ | Prompt 工厂设计: 7 模块拼装 + Token 预算 + 质量保障 | §13.7 |
+| 2026-06-25 | 3 | iOS UI 交互设计 + 颜色系统 + 毛玻璃材质规范 | §14 |
