@@ -1,0 +1,234 @@
+{
+  "_comment_top": "场景模板 — L2 内容层的静态资产。LLM 在此基础上实例化生成 scene_instance。",
+
+  "id": "restaurant",
+  "_comment_id": "场景类型唯一标识 (英文 slug)。scene_templates 表 PK。",
+
+  "name_zh": "餐厅点餐",
+  "_comment_name_zh": "场景中文名称 (UI 展示用)",
+
+  "name_en": "Restaurant",
+  "_comment_name_en": "场景英文名称 (UI 展示 / i18n fallback)",
+
+  "description": "在高档意大利餐厅体验完整点餐流程：问候、点餐、结账",
+  "_comment_description": "场景简介 (UI 副标题 / 用户选场景时的描述)",
+
+  "setting_template": "Bella Vita, an upscale Italian restaurant in downtown. It's {time_of_day}, {atmosphere}. Soft jazz plays in the background.",
+  "_comment_setting_template": "场景设定的模板字符串 (含 {placeholder})。instance_generator 会用 setting_defaults 填充后生成 instance_setting。",
+
+  "setting_defaults": {
+    "time_of_day": "Friday evening",
+    "atmosphere": "warm and busy"
+  },
+  "_comment_setting_defaults": "setting_template 中占位符的默认值。LLM 实例化时也可以根据用户偏好动态替换 (如 'quiet morning' / 'romantic dinner')",
+
+  "npc_count": {"min": 1, "max": 2},
+  "_comment_npc_count": "本场景的 NPC 数量范围 (L2-004 按场景动态)。实例化时 LLM 在此范围内生成最终 NPC 列表,用户也可手动调整。",
+
+  "required_beats": ["greeting", "ordering"],
+  "_comment_required_beats": "必选 beat ID 列表 (L2-005)。这些 beat 必须全部通过,场景才算完成。optional_beats 不强制。",
+
+  "optional_beats": ["payment", "farewell"],
+  "_comment_optional_beats": "可选 beat ID 列表。如果时间允许 / 用户意愿,可以选择性走完,但不影响场景完成判定。",
+
+  "npc_roles": [
+    {
+      "name": "Marco",
+      "_comment_name": "NPC 角色名 (同时也是 AutoGen agent 的 name, 必须全局唯一)",
+
+      "template_role": "waiter",
+      "_comment_template_role": "系统预设角色的职业标识。query 时用 (is_template, template_scene_type, template_role) 索引。",
+
+      "persona": "A passionate waiter from Naples, 28 years old. Moved to the city 3 years ago. Knows the menu inside out and loves recommending dishes. Warm and attentive.",
+      "_comment_persona": "角色人格 / 背景设定。会注入到 prompt 工厂的模块 ① Identity。DB 约束 ≤ 200 字 (控制 token)。",
+
+      "bio": "Marco has been at Bella Vita for 5 years. He's the kind of waiter who remembers your name after one visit.",
+      "_comment_bio": "角色扩展背景 (可选)。给 LLM 更多的角色一致性素材,不属于必需字段。",
+
+      "greeting": "Welcome to Bella Vita! Table for two? Right this way.",
+      "_comment_greeting": "角色默认开场白。场景开始时第一句固定台词,不消耗 LLM 调用。"
+    },
+    {
+      "name": "Antonio",
+      "_comment_name": "NPC 角色名 (同时也是 AutoGen agent 的 name, 必须全局唯一)",
+
+      "template_role": "chef",
+      "_comment_template_role": "系统预设角色的职业标识。query 时用 (is_template, template_scene_type, template_role) 索引。",
+
+      "persona": "The head chef, 45 years old, born and raised in Tuscany. Extremely passionate about ingredients and cooking techniques. Speaks with Italian enthusiasm.",
+      "_comment_persona": "角色人格 / 背景设定。会注入到 prompt 工厂的模块 ① Identity。DB 约束 ≤ 200 字 (控制 token)。",
+
+      "bio": "Antonio trained in Michelin-starred kitchens across Italy before opening Bella Vita's kitchen. He occasionally visits tables to hear feedback.",
+      "_comment_bio": "角色扩展背景 (可选)。给 LLM 更多的角色一致性素材,不属于必需字段。",
+
+      "greeting": "Buonasera! I am Antonio, the chef. I hope you enjoy your meal tonight.",
+      "_comment_greeting": "角色默认开场白。场景开始时第一句固定台词,不消耗 LLM 调用。"
+    }
+  ],
+  "_comment_npc_roles": "本场景可用的 NPC 角色库 (系统预设)。实例化时 LLM 按 npc_count 选 1-N 个,用户也可取消/添加自己的角色 (L2-006)。",
+
+  "vocab_pool": [
+    {
+      "word": "appetizer",
+      "translation_zh": "开胃菜",
+      "category": "ordering",
+      "difficulty": "B1",
+      "example": "Would you like to start with an appetizer?"
+    },
+    {
+      "word": "substitute",
+      "translation_zh": "替换",
+      "category": "request",
+      "difficulty": "B1",
+      "example": "Can I substitute the fries for a salad?"
+    },
+    {
+      "word": "medium rare",
+      "translation_zh": "三分熟",
+      "category": "ordering",
+      "difficulty": "B1",
+      "example": "I'd like my steak medium rare, please."
+    },
+    {
+      "word": "bill",
+      "translation_zh": "账单",
+      "category": "payment",
+      "difficulty": "A2",
+      "example": "Could we have the bill, please?"
+    },
+    {
+      "word": "tip",
+      "translation_zh": "小费",
+      "category": "payment",
+      "difficulty": "A2",
+      "example": "Is the tip included in the bill?"
+    },
+    {
+      "word": "reservation",
+      "translation_zh": "预订",
+      "category": "greeting",
+      "difficulty": "B1",
+      "example": "I have a reservation under the name Smith."
+    },
+    {
+      "word": "specials",
+      "translation_zh": "今日特餐",
+      "category": "ordering",
+      "difficulty": "B1",
+      "example": "What are today's specials?"
+    },
+    {
+      "word": "recommend",
+      "translation_zh": "推荐",
+      "category": "ordering",
+      "difficulty": "B1",
+      "example": "What would you recommend?"
+    },
+    {
+      "word": "allergic",
+      "translation_zh": "过敏",
+      "category": "request",
+      "difficulty": "B1",
+      "example": "I'm allergic to nuts."
+    },
+    {
+      "word": "wine list",
+      "translation_zh": "酒单",
+      "category": "ordering",
+      "difficulty": "B1",
+      "example": "Could we see the wine list?"
+    },
+    {
+      "word": "entree",
+      "translation_zh": "主菜",
+      "category": "ordering",
+      "difficulty": "B1",
+      "example": "For my entree, I'll have the salmon."
+    },
+    {
+      "word": "complimentary",
+      "translation_zh": "免费赠送的",
+      "category": "service",
+      "difficulty": "B2",
+      "example": "This complimentary bread is delicious."
+    }
+  ],
+  "_comment_vocab_pool": "场景词汇池。LLM 实例化时从中按 CEFR 等级 + beat 需求选出 ~5 个目标词,生成 selected_vocabulary。",
+
+  "pattern_pool": [
+    {
+      "pattern": "I'd like to order ___",
+      "use_case": "ordering",
+      "translation_zh": "我想点...",
+      "example": "I'd like to order the grilled salmon."
+    },
+    {
+      "pattern": "Can I substitute ___ for ___?",
+      "use_case": "request",
+      "translation_zh": "我能用...替换...吗？",
+      "example": "Can I substitute the mashed potatoes for a salad?"
+    },
+    {
+      "pattern": "Could we have the ___?",
+      "use_case": "request",
+      "translation_zh": "我们能要...吗？",
+      "example": "Could we have the bill, please?"
+    },
+    {
+      "pattern": "What do you recommend?",
+      "use_case": "ordering",
+      "translation_zh": "你推荐什么？",
+      "example": "What do you recommend for a main course?"
+    },
+    {
+      "pattern": "I have a reservation under ___",
+      "use_case": "greeting",
+      "translation_zh": "我用...的名字预订了",
+      "example": "I have a reservation under the name Johnson."
+    }
+  ],
+  "_comment_pattern_pool": "场景句型池。LLM 实例化时从中选出 ~3 个目标句型,生成 selected_patterns。prompt 工厂的模块 ③ Mission 会注入。",
+
+  "beats": [
+    {
+      "beat_id": "greeting",
+      "beat_name": "问候",
+      "learning_goal": "礼貌问候 + 说明预订/人数",
+      "sort_order": 0,
+      "advance_keywords": ["hello", "hi", "good evening", "good afternoon", "table for", "reservation", "booking", "two people", "party of"],
+      "min_turns": 1,
+      "max_turns": 6
+    },
+    {
+      "beat_id": "ordering",
+      "beat_name": "点餐",
+      "learning_goal": "表达点餐意愿 + 询问推荐 + 提出特殊要求",
+      "sort_order": 1,
+      "advance_keywords": ["i'll order", "i'll have", "i'd like the", "i'll take", "i'll get", "for my main", "for dessert", "that's all", "nothing else", "ready to order", "bring the bill", "could we have the bill", "check please"],
+      "min_turns": 2,
+      "max_turns": 8
+    },
+    {
+      "beat_id": "payment",
+      "beat_name": "结账",
+      "learning_goal": "请求账单 + 讨论小费 + 告别",
+      "sort_order": 2,
+      "advance_keywords": ["bill", "check", "pay", "tip", "credit card", "cash", "split", "thank you", "bye", "goodbye", "great evening"],
+      "min_turns": 1,
+      "max_turns": 6
+    }
+  ],
+  "_comment_beats": "场景节拍列表。每个 beat 是一个独立的对话阶段,状态机按 sort_order 顺序推进。字段含义见每个对象内的 _comment_* (下方)。",
+
+  "_comment_beats_beat_id": "beat 唯一标识 (template 内唯一)。状态机的 state key。",
+  "_comment_beats_beat_name": "beat 中文名 (UI 展示 / beat 进度条)",
+  "_comment_beats_learning_goal": "本 beat 的学习目标 (描述性,目前未注入到 prompt,留作 Checkpoint 评分标准)",
+  "_comment_beats_sort_order": "beat 排序 (状态机按此顺序推进)",
+  "_comment_beats_advance_keywords": "beat 推进关键词。BeatManager 用关键词匹配判定用户是否完成本 beat (demo 用规则驱动,V2 可换成 LLM 判定)",
+  "_comment_beats_min_turns": "本 beat 最少持续轮数。强制让用户充分练习,避免一句话就跳到下一拍。",
+  "_comment_beats_max_turns": "本 beat 最长轮数。超过后自动强制推进 (避免卡死在某一拍)。接近 max 时 NPC 会自然引导 (L4-003 失败兜底的友好版)。",
+
+  "_comment_unused": "以下字段在 schema 中存在但当前 demo 模板未使用:V2 扩展时填充 → checkpoint_type (fill_blank/choice/sentence_construction) / difficulty_progression (low/mid/high) / checkpoint_prompts",
+  "_comment_schema_note": "本模板对应 schema 见: 2026-06-23-LinguaScene_Grill完整设计全景_Q1-Q20.md §11.2.4 ~ §11.2.7",
+  "_comment_maintenance": "模板内容变更必须同步: ① 文档设计稿 (grill 输出) ② 数据库迁移脚本 (V2) ③ prompt_factory 的 CEFR / 场景流程 (若有新增)"
+}
